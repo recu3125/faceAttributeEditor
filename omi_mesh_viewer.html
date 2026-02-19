@@ -1,0 +1,1538 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Attribute Editor</title>
+  <meta property="og:title" content="Face Attribute Editor" />
+  <meta property="og:description" content="Edit and preview face attributes in real time." />
+  <meta property="og:image" content="https://recu3125.com/faceattributeeditor/thumb.jpg" />
+  <meta property="og:url" content="https://recu3125.com/faceattributeeditor/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Face Attribute Editor" />
+  <meta name="twitter:description" content="Edit and preview face attributes in real time." />
+  <meta name="twitter:image" content="https://recu3125.com/faceattributeeditor/thumb.jpg" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBSLJMMGZH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-QBSLJMMGZH');
+  </script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --text: #e8eaf0;
+      --muted: #9aa3b2;
+      --accent: #5cc8ff;
+      --accent2: #ff8bd1;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e0e0e0; color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; height: 100vh; overflow: hidden; }
+    .wrap { display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
+    .panel { background: linear-gradient(180deg, #171a21, #12151b); padding: 18px; border-right: 1px solid #232838; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    .title-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .title { font-size: 20px; font-weight: 700; letter-spacing: 0.2px; }
+    .byline { font-size: 12px; color: var(--muted); }
+    .byline-link { color: #ffffff; text-decoration: underline; text-underline-offset: 2px; }
+    .byline-link:hover { color: var(--accent); }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .search { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a3145; background: #0f1218; color: var(--text); margin-bottom: 12px; }
+    .slider { display: grid; grid-template-columns: 120px 1fr 42px; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .slider input[type=range] { width: 100%; }
+    .value { font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+    .section { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #2a3145; }
+    .tabs { display: flex; gap: 6px; margin: 10px 0 16px; flex-wrap: wrap; }
+    .tab-btn { background: #1b2130; color: var(--text); border: 1px solid #2a3145; padding: 6px 10px; border-radius: 999px; cursor: pointer; font-size: 12px; letter-spacing: 0.3px; }
+    .tab-btn.active { background: var(--accent); color: #0f1115; border-color: var(--accent); }
+    .panel-view { display: none; }
+    .panel-view.active { display: block; }
+    .file-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #2a3145; background: #0f1218; color: var(--text); }
+    .list { display: grid; gap: 6px; }
+    .list-item { display: grid; grid-template-columns: 1fr 88px; gap: 8px; align-items: center; font-size: 13px; background: #0f1218; border: 1px solid #2a3145; padding: 6px 8px; border-radius: 8px; }
+    .list-item span { color: var(--muted); text-align: right; }
+    .list-item .col-name { color: var(--text); text-align: left; }
+    .list-item.list-header { background: transparent; border: 1px dashed #2a3145; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .list-item.list-header span { color: var(--muted); }
+    .btn { background: #22283a; color: var(--text); border: 1px solid #2f3750; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+    .btn:hover { border-color: var(--accent); }
+    #modalClose { background: #2e7d32; border-color: #2e7d32; color: #f2fff2; font-weight: 700; }
+    #modalClose:hover { border-color: #3fa645; }
+    #disclaimerAccept { background: #2e7d32; border-color: #2e7d32; color: #f2fff2; font-weight: 700; }
+    #disclaimerAccept:hover { border-color: #3fa645; }
+    .btn-upload { background: #d9dbe2; border-color: #d9dbe2; color: #0f1115; font-weight: 600; }
+    .btn-upload:hover { border-color: #f1f2f6; }
+    .btn-reset { background: #d04343; border-color: #d04343; color: #fff1f1; font-weight: 600; }
+    .btn-reset:hover { border-color: #ff8f8f; }
+    .btn-random { background: linear-gradient(90deg, #7a2626, #7a4a26, #7a6a26, #2e6a2e, #265a7a, #2a2a7a, #6a2a7a); border: none; color: #ffffff; font-weight: 700; }
+    .btn-random:hover { filter: brightness(1.08); }
+    .modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 10; }
+    .modal.show { display: flex; }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(10, 12, 18, 0.7); }
+    .modal-card { position: relative; width: min(680px, 92vw); max-height: 88vh; overflow: auto; background: #141824; border: 1px solid #2a3145; border-radius: 14px; padding: 16px; z-index: 1; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-sub { color: var(--muted); font-size: 12px; }
+    .disclaimer-text { color: #f4f8ff; font-size: 16px; line-height: 1.65; }
+    .disclaimer-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .canvas-wrap { position: relative; height: 100vh; overflow: hidden; }
+    #canvas { width: 100%; height: 100vh; display: block; }
+    .hud { position: absolute; top: 12px; left: 12px; background: rgba(12,14,18,0.65); padding: 8px 10px; border: 1px solid #2a3145; border-radius: 10px; font-size: 12px; }
+    .legend { color: var(--muted); }
+    @media (max-width: 960px) {
+      .wrap { grid-template-columns: 1fr; grid-template-rows: 56dvh 44dvh; grid-template-areas: "canvas" "panel"; height: 100dvh; }
+      .panel { grid-area: panel; }
+      .canvas-wrap { grid-area: canvas; }
+      .canvas-wrap { height: 56dvh; }
+      .panel { border-right: none; border-top: 1px solid #232838; border-bottom: none; max-height: 44dvh; padding-bottom: 12px; position: relative; z-index: 2; }
+      #canvas { height: 100%; }
+      .slider { grid-template-columns: 100px 1fr 52px; }
+      .btn { padding: 8px 12px; }
+      .modal-card { width: 92vw; }
+      .modal-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .panel { max-height: 44dvh; padding: 16px; }
+      #canvas { height: 100%; }
+      .tabs { gap: 8px; }
+      .tab-btn { padding: 8px 12px; font-size: 13px; }
+      .slider { grid-template-columns: 90px 1fr 50px; }
+      .value { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <aside class="panel">
+      <div class="title-row">
+        <div class="title">Face Attribute Editor</div>
+        <span class="byline">by <a class="byline-link" href="https://recu3125.com" target="_blank" rel="noopener noreferrer">recu3125</a></span>
+      </div>
+      <div class="panel-view active" id="panel-warp">
+        <div class="section">
+          <div class="row" style="flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
+            <button class="btn btn-upload" id="uploadBtn">Upload Face</button>
+            <button class="btn btn-reset" id="resetAll">Reset All</button>
+          </div>
+          <div class="slider">
+            <label>Global scale</label>
+            <input id="globalScale" type="range" min="0" max="0.2" step="0.001" value="0.1" />
+            <div id="globalScaleValue" class="value">0.100</div>
+          </div>
+          <div class="row">
+            <button class="btn btn-random" id="randomize">Randomize</button>
+          </div>
+        </div>
+        <div id="sliders"></div>
+        <div class="section" style="font-size: 12px; color: var(--muted); line-height: 1.4; margin-top: 18px;">
+          Uses data derived from the OMI (One Million Impressions) dataset. Licensed under CC BY-NC-SA 4.0:
+          <span style="word-break: break-all;">https://creativecommons.org/licenses/by-nc-sa/4.0/</span>
+        </div>
+      </div>
+    </aside>
+    <main class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </main>
+  </div>
+  <input id="uploadInput" class="file-input" type="file" accept="image/*" style="display: none;" />
+
+  <div class="modal show" id="disclaimerModal" aria-hidden="false">
+    <div class="modal-backdrop" id="disclaimerBackdrop" onclick="this.parentElement.classList.remove('show'); this.parentElement.setAttribute('aria-hidden','true');"></div>
+    <div class="modal-card">
+      <div class="sub disclaimer-text">
+        This tool is built from processed impression ratings in the OMI (One Million Impressions) dataset, where people judged faces.<br><br>The outputs DO reflect human stereotypes and social biases.<br><br>
+      </div>
+      <div class="disclaimer-actions">
+        <button class="btn" id="disclaimerAccept" onclick="document.getElementById('disclaimerModal')?.classList.remove('show'); document.getElementById('disclaimerModal')?.setAttribute('aria-hidden','true');">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="analyzeModal" aria-hidden="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Face Attribute Summary</div>
+        </div>
+        <button class="btn" id="modalClose">Apply</button>
+      </div>
+      <div id="modalStatus" class="sub">Analyzing...</div>
+      <div id="modalError" class="sub" style="color: #ff8b8b; display: none;"></div>
+      <div class="section" style="margin-top: 12px;">
+        <div id="allAttrs" class="list"></div>
+      </div>
+    </div>
+  </div>
+
+  
+  <script type="importmap">
+    {
+      "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/earcut@2.2.4/dist/earcut.min.js"></script>
+  <script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { FilesetResolver, FaceLandmarker } from "@mediapipe/tasks-vision";
+
+
+  async function loadData() {
+    try {
+      const response = await fetch('./omi_mesh_data_recommended.meta.json');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.status}`);
+      }
+      const meta = await response.json();
+      const binResponse = await fetch('./omi_mesh_data_recommended.bin');
+      if (!binResponse.ok) {
+        throw new Error(`Failed to fetch binary: ${binResponse.status}`);
+      }
+      const buffer = await binResponse.arrayBuffer();
+      const floats = new Float32Array(buffer);
+
+      let offset = 0;
+      const mean = floats.slice(offset, offset + meta.mean_len);
+      offset += meta.mean_len;
+
+      const recCount = meta.rec_shape[0] * meta.rec_shape[1];
+      const recFlat = floats.slice(offset, offset + recCount);
+      const rec = [];
+      for (let a = 0; a < meta.rec_shape[0]; a++) {
+        const start = a * meta.rec_shape[1];
+        rec.push(recFlat.slice(start, start + meta.rec_shape[1]));
+      }
+
+      return {
+        attrs: meta.attrs,
+        mean: Array.from(mean),
+        rec: rec.map(arr => Array.from(arr)),
+        edges: meta.edges,
+        triangles: meta.triangles,
+        landmark_count: meta.landmark_count,
+        regression_meta: meta.regression_meta,
+        mean_ranges: meta.mean_ranges || null
+      };
+    } catch (error) {
+      console.error('Failed to load omi_mesh_data_recommended.meta.json', error);
+      const errorEl = document.getElementById('modalError');
+      const statusEl = document.getElementById('modalStatus');
+      if (statusEl) statusEl.textContent = 'Data load failed.';
+      if (errorEl) {
+        errorEl.textContent = 'Failed to load omi_mesh_data_recommended.meta.json / .bin. If you opened this file directly, run a local server (e.g. python -m http.server) and reload.';
+        errorEl.style.display = 'block';
+      }
+      return null;
+    }
+  }
+
+  const data = await loadData();
+  if (!data) {
+    throw new Error('omi_mesh_data_recommended.meta.json load failed');
+  }
+  const attrs = data.attrs;
+  const recVecs = data.rec ? data.rec.map(arr => new Float32Array(arr)) : null;
+  let activeVectors = recVecs;
+  const mean = new Float32Array(data.mean);
+  const meanRangesMeta = data.mean_ranges || null;
+  let calibration = null;
+  async function loadCalibration() {
+    try {
+      const resp = await fetch('./omi_mesh_data_univariate.calibration.json');
+      if (!resp.ok) return null;
+      return await resp.json();
+    } catch (error) {
+      return null;
+    }
+  }
+  calibration = await loadCalibration();
+  const edges = data.edges;
+  const triangles = data.triangles;
+
+  // Landmark index groups (MediaPipe Face Mesh 478 points)
+  const LIPS_OUTER = [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
+  const LIPS_INNER = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
+  const LIPS_OUTER_SET = new Set(LIPS_OUTER);
+  const LIPS_INNER_SET = new Set(LIPS_INNER);
+  const LEFT_EYE_LOOP = [33,246,161,160,159,158,157,173,133,155,154,153,145,144,163,7];
+  const RIGHT_EYE_LOOP = [263,466,388,387,386,385,384,398,362,382,381,380,374,373,390,249];
+  const LEFT_IRIS_LOOP = [468,469,470,471,472];
+  const RIGHT_IRIS_LOOP = [473,474,475,476,477];
+  const meanAligned = normalizeFace(mean, false);
+  const meanRanges = (() => {
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+    for (let i = 0; i < meanAligned.length; i += 3) {
+      const x = meanAligned[i];
+      const y = meanAligned[i + 1];
+      const z = meanAligned[i + 2];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+    }
+    const rangeX = Math.max(1e-6, maxX - minX);
+    const rangeY = Math.max(1e-6, maxY - minY);
+    const rangeZ = Math.max(1e-6, maxZ - minZ);
+    return { rangeX, rangeY, rangeZ, xyAvg: (rangeX + rangeY) * 0.5 };
+  })();
+
+  const slidersEl = document.getElementById('sliders');
+  const globalScaleEl = document.getElementById('globalScale');
+  const globalScaleValueEl = document.getElementById('globalScaleValue');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const uploadInput = document.getElementById('uploadInput');
+  const disclaimerModal = document.getElementById('disclaimerModal');
+  const disclaimerBackdrop = document.getElementById('disclaimerBackdrop');
+  const disclaimerAccept = document.getElementById('disclaimerAccept');
+  const analyzeModal = document.getElementById('analyzeModal');
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalClose = document.getElementById('modalClose');
+  const modalStatus = document.getElementById('modalStatus');
+  const modalError = document.getElementById('modalError');
+  const allAttrsEl = document.getElementById('allAttrs');
+
+  const weights = new Float32Array(attrs.length);
+  let enableIrisDisks = true;
+  let enableIrisWire = true;
+  let photoMode = false;
+  let vectorMode = 'recommended';
+
+  let reverseModel = null;
+  async function loadReverseModel() {
+    try {
+      const resp = await fetch('./omi_mesh_data_reverse_mlp.meta.json');
+      if (!resp.ok) return null;
+      const meta = await resp.json();
+      const binResp = await fetch('./omi_mesh_data_reverse_mlp.bin');
+      if (!binResp.ok) return null;
+      const buffer = await binResp.arrayBuffer();
+      const floats = new Float32Array(buffer);
+      let offset = 0;
+      const xMeanLen = meta.x_mean_len;
+      const xStdLen = meta.x_std_len;
+      const yMeanLen = meta.y_mean_len;
+      const yStdLen = meta.y_std_len;
+      const xMeanArr = floats.slice(offset, offset + xMeanLen);
+      offset += xMeanLen;
+      const xStdArr = floats.slice(offset, offset + xStdLen);
+      offset += xStdLen;
+      const yMeanArr = floats.slice(offset, offset + yMeanLen);
+      offset += yMeanLen;
+      const yStdArr = floats.slice(offset, offset + yStdLen);
+      offset += yStdLen;
+
+      const w0Count = meta.weights[0].rows * meta.weights[0].cols;
+      const W0 = floats.slice(offset, offset + w0Count);
+      offset += w0Count;
+      const b0 = floats.slice(offset, offset + meta.biases[0]);
+      offset += meta.biases[0];
+      const w1Count = meta.weights[1].rows * meta.weights[1].cols;
+      const W1 = floats.slice(offset, offset + w1Count);
+      offset += w1Count;
+      const b1 = floats.slice(offset, offset + meta.biases[1]);
+      offset += meta.biases[1];
+        return {
+          xMean: xMeanArr,
+          xStd: xStdArr,
+          yMean: yMeanArr,
+          yStd: yStdArr,
+          W0,
+          b0,
+          W1,
+          b1,
+          w0Shape: meta.weights[0],
+          w1Shape: meta.weights[1],
+          attrs: meta.attrs || [],
+          percentiles: meta.percentiles || null,
+          meanRanges: meta.mean_ranges || null
+        };
+    } catch (error) {
+      return null;
+    }
+  }
+  const reverseData = await loadReverseModel();
+  if (reverseData && reverseData.W0 && reverseData.W1 && reverseData.attrs.length === attrs.length) {
+    reverseModel = reverseData;
+  }
+
+  function attachMiddleClickReset(input, defaultValue) {
+    input.addEventListener('mousedown', (e) => {
+      if (e.button !== 1) return;
+      e.preventDefault();
+      input.value = defaultValue;
+      input.dispatchEvent(new Event('input'));
+    });
+  }
+
+  function createSlider(name, index) {
+    const wrap = document.createElement('div');
+    wrap.className = 'slider';
+    const label = document.createElement('label');
+    label.textContent = name;
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = -2;
+    input.max = 2;
+    input.step = 0.01;
+    input.value = 0;
+    const value = document.createElement('div');
+    value.className = 'value';
+    value.textContent = '0.00';
+    input.addEventListener('input', () => {
+      weights[index] = parseFloat(input.value);
+      value.textContent = Number(input.value).toFixed(2);
+      needsUpdate = true;
+    });
+    attachMiddleClickReset(input, 0);
+    wrap.append(label, input, value);
+    wrap.dataset.attr = name.toLowerCase();
+    slidersEl.appendChild(wrap);
+  }
+
+  attrs.forEach((a, i) => createSlider(a, i));
+
+  document.getElementById('resetAll').addEventListener('click', () => {
+    weights.fill(0);
+    slidersEl.querySelectorAll('input[type=range]').forEach((el) => {
+      el.value = 0;
+      el.dispatchEvent(new Event('input'));
+    });
+    // Keep uploaded texture/UVs if a photo was applied.
+    if (!photoMode) {
+      resetMeshMaterial();
+      enableIrisDisks = true;
+      leftIrisDisk.visible = true;
+      rightIrisDisk.visible = true;
+    }
+    mesh.visible = true;
+  });
+
+  document.getElementById('randomize').addEventListener('click', () => {
+    slidersEl.querySelectorAll('input[type=range]').forEach((el, i) => {
+      const v = (Math.random() * 2 - 1) * 1.5;
+      el.value = v.toFixed(2);
+      el.dispatchEvent(new Event('input'));
+    });
+    resetMeshMaterial();
+    mesh.visible = true;
+    photoMode = false;
+    enableIrisDisks = true;
+    leftIrisDisk.visible = true;
+    rightIrisDisk.visible = true;
+  });
+
+  globalScaleEl.addEventListener('input', () => {
+    globalScaleValueEl.textContent = Number(globalScaleEl.value).toFixed(3);
+    needsUpdate = true;
+  });
+  attachMiddleClickReset(globalScaleEl, globalScaleEl.value);
+
+  function setModalError(message) {
+    if (!modalError) return;
+    if (message) {
+      modalError.textContent = message;
+      modalError.style.display = 'block';
+    } else {
+      modalError.textContent = '';
+      modalError.style.display = 'none';
+    }
+  }
+
+  function renderAttrList(container, items) {
+    container.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'list-item list-header';
+    header.innerHTML = `<div class="col-name">Attribute</div><span class="col-value">Value</span>`;
+    container.appendChild(header);
+    items.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'list-item';
+      const value = item.percentile !== null && item.percentile !== undefined
+        ? `${item.percentile}%`
+        : item.score.toFixed(3);
+      const label = item.rank ? `${item.rank}. ${item.name}` : item.name;
+      row.innerHTML = `<div class="col-name">${label}</div><span class="col-value">${value}</span>`;
+      container.appendChild(row);
+    });
+  }
+
+  function percentileFromSorted(sorted, score) {
+    if (!sorted || !sorted.length) return 0;
+    let lo = 0;
+    let hi = sorted.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (sorted[mid] <= score) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo / sorted.length;
+  }
+
+  function computeAttributeScores(vec) {
+    if (!reverseModel) {
+      return new Float32Array(attrs.length);
+    }
+    const scores = new Float32Array(attrs.length);
+    const xMean = reverseModel.xMean;
+    const xStd = reverseModel.xStd;
+    const yMean = reverseModel.yMean;
+    const yStd = reverseModel.yStd;
+    const W0 = reverseModel.W0;
+    const b0 = reverseModel.b0;
+    const W1 = reverseModel.W1;
+    const b1 = reverseModel.b1;
+    const hidden = reverseModel.w0Shape.cols;
+
+    const z0 = new Float32Array(hidden);
+    for (let h = 0; h < hidden; h++) {
+      let sum = b0[h] || 0;
+      const base = h;
+      for (let i = 0; i < vec.length; i++) {
+        const x = (vec[i] - xMean[i]) / (xStd[i] || 1);
+        sum += x * W0[i * hidden + base];
+      }
+      z0[h] = sum > 0 ? sum : 0;
+    }
+
+    for (let a = 0; a < scores.length; a++) {
+      let sum = b1[a] || 0;
+      for (let h = 0; h < hidden; h++) {
+        sum += z0[h] * W1[h * scores.length + a];
+      }
+      scores[a] = sum * (yStd[a] || 1) + (yMean[a] || 0);
+    }
+    return scores;
+  }
+
+  function computeMeanRangesFromAligned(alignedVec) {
+    let xMin = Infinity, xMax = -Infinity;
+    let yMin = Infinity, yMax = -Infinity;
+    let zMin = Infinity, zMax = -Infinity;
+    for (let i = 0; i < alignedVec.length; i += 3) {
+      const x = alignedVec[i];
+      const y = alignedVec[i + 1];
+      const z = alignedVec[i + 2];
+      if (x < xMin) xMin = x;
+      if (x > xMax) xMax = x;
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+      if (z < zMin) zMin = z;
+      if (z > zMax) zMax = z;
+    }
+    const rangeX = Math.max(1e-6, xMax - xMin);
+    const rangeY = Math.max(1e-6, yMax - yMin);
+    const rangeZ = Math.max(1e-6, zMax - zMin);
+    return { rangeX, rangeY, rangeZ, xyAvg: (rangeX + rangeY) * 0.5 };
+  }
+
+  function computeZScaleFromVec(alignedVec) {
+    const ranges = computeMeanRangesFromAligned(alignedVec);
+    const meanRatio = meanRanges.rangeZ / meanRanges.xyAvg;
+    const uploadRatio = ranges.rangeZ / ranges.xyAvg;
+    return meanRatio / uploadRatio;
+  }
+
+  function computeZScaleFromMeta(alignedVec) {
+    if (!meanRangesMeta) return computeZScaleFromVec(alignedVec);
+    const ranges = computeMeanRangesFromAligned(alignedVec);
+    const meanRatio = meanRangesMeta.rangeZ / meanRangesMeta.xyAvg;
+    const uploadRatio = ranges.rangeZ / ranges.xyAvg;
+    return meanRatio / uploadRatio;
+  }
+
+  function scoreToPercentile(attrName, score) {
+    if (!reverseModel || !reverseModel.percentiles) return null;
+    const table = reverseModel.percentiles[attrName];
+    if (!table || !table.length) return null;
+    let lo = 0;
+    let hi = table.length - 1;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi + 1) / 2);
+      if (score >= table[mid]) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return lo; // 0..100
+  }
+
+
+  function computeEyeCenter(vec, indices) {
+    let x = 0;
+    let y = 0;
+    let z = 0;
+    for (const idx of indices) {
+      x += vec[idx * 3];
+      y += vec[idx * 3 + 1];
+      z += vec[idx * 3 + 2];
+    }
+    const n = indices.length || 1;
+    return [x / n, y / n, z / n];
+  }
+
+  function computeLoopCenter(vec, indices) {
+    let x = 0;
+    let y = 0;
+    let z = 0;
+    for (const idx of indices) {
+      x += vec[idx * 3];
+      y += vec[idx * 3 + 1];
+      z += vec[idx * 3 + 2];
+    }
+    const n = indices.length || 1;
+    return [x / n, y / n, z / n];
+  }
+
+  function normalizeFace(vec, mirrorX) {
+    const left = computeEyeCenter(vec, LEFT_EYE_LOOP);
+    const right = computeEyeCenter(vec, RIGHT_EYE_LOOP);
+    const mouth = computeLoopCenter(vec, LIPS_OUTER);
+    const midEyes = [(left[0] + right[0]) * 0.5, (left[1] + right[1]) * 0.5, (left[2] + right[2]) * 0.5];
+
+    let xAxis = [right[0] - left[0], right[1] - left[1], right[2] - left[2]];
+    let yAxis = [mouth[0] - midEyes[0], mouth[1] - midEyes[1], mouth[2] - midEyes[2]];
+    const xLen = Math.hypot(xAxis[0], xAxis[1], xAxis[2]) || 1;
+    const yLen = Math.hypot(yAxis[0], yAxis[1], yAxis[2]) || 1;
+    xAxis = [xAxis[0] / xLen, xAxis[1] / xLen, xAxis[2] / xLen];
+    yAxis = [yAxis[0] / yLen, yAxis[1] / yLen, yAxis[2] / yLen];
+
+    let zAxis = [
+      xAxis[1] * yAxis[2] - xAxis[2] * yAxis[1],
+      xAxis[2] * yAxis[0] - xAxis[0] * yAxis[2],
+      xAxis[0] * yAxis[1] - xAxis[1] * yAxis[0]
+    ];
+    const zLen = Math.hypot(zAxis[0], zAxis[1], zAxis[2]) || 1;
+    zAxis = [zAxis[0] / zLen, zAxis[1] / zLen, zAxis[2] / zLen];
+
+    if (zAxis[2] < 0) {
+      zAxis = [-zAxis[0], -zAxis[1], -zAxis[2]];
+    }
+    yAxis = [
+      zAxis[1] * xAxis[2] - zAxis[2] * xAxis[1],
+      zAxis[2] * xAxis[0] - zAxis[0] * xAxis[2],
+      zAxis[0] * xAxis[1] - zAxis[1] * xAxis[0]
+    ];
+    const yLen2 = Math.hypot(yAxis[0], yAxis[1], yAxis[2]) || 1;
+    yAxis = [yAxis[0] / yLen2, yAxis[1] / yLen2, yAxis[2] / yLen2];
+
+    const out = new Float32Array(vec.length);
+    for (let i = 0; i < vec.length; i += 3) {
+      const x = vec[i] - midEyes[0];
+      const y = vec[i + 1] - midEyes[1];
+      const z = vec[i + 2] - midEyes[2];
+      let nx = x * xAxis[0] + y * xAxis[1] + z * xAxis[2];
+      const ny = x * yAxis[0] + y * yAxis[1] + z * yAxis[2];
+      const nz = x * zAxis[0] + y * zAxis[1] + z * zAxis[2];
+      if (mirrorX) nx = -nx;
+      out[i] = nx;
+      out[i + 1] = ny;
+      out[i + 2] = nz;
+    }
+    return out;
+  }
+
+  function applyImageTexture(img, vecForUv) {
+    if (!vecForUv || vecForUv.length !== positions.length) return;
+    const uvs = new Float32Array((vecForUv.length / 3) * 2);
+    for (let i = 0; i < vecForUv.length / 3; i++) {
+      const u = vecForUv[i * 3];
+      const v = vecForUv[i * 3 + 1];
+      uvs[i * 2] = u;
+      uvs[i * 2 + 1] = v;
+    }
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    geometry.getAttribute('uv').needsUpdate = true;
+
+    if (uploadedTexture) {
+      uploadedTexture.dispose();
+      uploadedTexture = null;
+    }
+    uploadedTexture = new THREE.Texture(img);
+    uploadedTexture.colorSpace = THREE.SRGBColorSpace;
+    uploadedTexture.flipY = false;
+    uploadedTexture.needsUpdate = true;
+    photoMat.map = uploadedTexture;
+    photoMat.needsUpdate = true;
+    mesh.material = photoMat;
+  }
+
+  function resetMeshMaterial() {
+    if (uploadedTexture) {
+      uploadedTexture.dispose();
+      uploadedTexture = null;
+    }
+    baseMat.map = null;
+    baseMat.vertexColors = true;
+    baseMat.roughness = 0.55;
+    baseMat.metalness = 0.05;
+    baseMat.needsUpdate = true;
+    mesh.material = baseMat;
+  }
+
+  let landmarker = null;
+  let currentUploadName = null;
+  let uploadedTexture = null;
+  async function getLandmarker() {
+    if (landmarker) return landmarker;
+    const resolver = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm'
+    );
+    landmarker = await FaceLandmarker.createFromOptions(resolver, {
+      baseOptions: {
+        modelAssetPath:
+          'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task'
+      },
+      runningMode: 'IMAGE',
+      numFaces: 1
+    });
+    return landmarker;
+  }
+
+  let pendingUpload = null;
+
+  function openModal() {
+    if (!analyzeModal) return;
+    analyzeModal.classList.add('show');
+    analyzeModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    if (!analyzeModal) return;
+    analyzeModal.classList.remove('show');
+    analyzeModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function closeDisclaimerModal() {
+    if (!disclaimerModal) return;
+    disclaimerModal.classList.remove('show');
+    disclaimerModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function applyPendingUpload() {
+    if (!pendingUpload) return;
+    const { img, rawVec, alignedVec } = pendingUpload;
+    pendingUpload = null;
+    photoMode = true;
+
+    if (alignedVec.length === basePositions.length) {
+      basePositions.set(alignedVec);
+      computeBaseCenter();
+      recomputeCenterMask();
+      writeBasePositions();
+      useFilteredTriangles = false;
+      updatePolysFromPositions(positions);
+      updateFilteredTriangles(positions);
+      weights.fill(0);
+      slidersEl.querySelectorAll('input[type=range]').forEach((el) => {
+        el.value = 0;
+        el.dispatchEvent(new Event('input'));
+      });
+      needsUpdate = true;
+    }
+
+    applyImageTexture(img, rawVec);
+    eyeOverlayMesh.visible = false;
+    leftIrisDisk.visible = false;
+    rightIrisDisk.visible = false;
+    enableIrisDisks = false;
+    enableIrisWire = false;
+    lipsMesh.visible = false;
+    lines.visible = false;
+    irisLines.visible = false;
+    selectionMesh.visible = false;
+    mesh.visible = true;
+  }
+
+  if (uploadBtn && uploadInput) {
+    uploadBtn.addEventListener('click', () => {
+      uploadInput.value = '';
+      uploadInput.click();
+    });
+  }
+
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', () => {
+      closeModal();
+      applyPendingUpload();
+    });
+  }
+  if (modalClose) {
+    modalClose.addEventListener('click', () => {
+      closeModal();
+      applyPendingUpload();
+    });
+  }
+  if (disclaimerBackdrop) {
+    disclaimerBackdrop.addEventListener('click', () => {
+      closeDisclaimerModal();
+    });
+  }
+  if (disclaimerAccept) {
+    disclaimerAccept.addEventListener('click', () => {
+      closeDisclaimerModal();
+    });
+  }
+
+  if (uploadInput) {
+    uploadInput.addEventListener('change', () => {
+      const file = uploadInput.files && uploadInput.files[0];
+      if (!file) return;
+      currentUploadName = file.name || null;
+      setModalError('');
+      if (modalStatus) modalStatus.textContent = 'Loading image...';
+      openModal();
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = async () => {
+          if (modalStatus) modalStatus.textContent = 'Detecting face...';
+
+          try {
+            const detector = await getLandmarker();
+            const result = detector.detect(img);
+            const landmarks = result.faceLandmarks && result.faceLandmarks[0];
+            if (!landmarks || landmarks.length === 0) {
+              if (modalStatus) modalStatus.textContent = 'No face found.';
+              setModalError('No face detected. Try a clearer, front-facing photo.');
+              return;
+            }
+
+            const rawVec = new Float32Array(landmarks.length * 3);
+            for (let i = 0; i < landmarks.length; i++) {
+              rawVec[i * 3] = landmarks[i].x;
+              rawVec[i * 3 + 1] = landmarks[i].y;
+              rawVec[i * 3 + 2] = landmarks[i].z;
+            }
+            // Debug hooks removed
+
+            // Preserve image aspect for 3D positions
+            const aspect = img.naturalWidth / Math.max(1, img.naturalHeight);
+            const vecScaled = new Float32Array(rawVec.length);
+            for (let i = 0; i < rawVec.length; i += 3) {
+              vecScaled[i] = rawVec[i] * aspect;
+              vecScaled[i + 1] = rawVec[i + 1];
+              vecScaled[i + 2] = rawVec[i + 2];
+            }
+
+            const alignedVec = normalizeFace(vecScaled, false);
+            // Debug hooks removed
+            let xMin = Infinity, xMax = -Infinity;
+            let yMin = Infinity, yMax = -Infinity;
+            let zMin = Infinity, zMax = -Infinity;
+            for (let i = 2; i < alignedVec.length; i += 3) {
+              const x = alignedVec[i - 2];
+              const y = alignedVec[i - 1];
+              const z = alignedVec[i];
+              if (x < xMin) xMin = x;
+              if (x > xMax) xMax = x;
+              if (y < yMin) yMin = y;
+              if (y > yMax) yMax = y;
+              if (z < zMin) zMin = z;
+              if (z > zMax) zMax = z;
+            }
+            const rangeX = Math.max(1e-6, xMax - xMin);
+            const rangeY = Math.max(1e-6, yMax - yMin);
+            const rangeZ = Math.max(1e-6, zMax - zMin);
+            const xyAvg = (rangeX + rangeY) * 0.5;
+              const reverseMeanRanges = reverseModel && reverseModel.meanRanges ? reverseModel.meanRanges : meanRanges;
+              const meanRatio = reverseMeanRanges.rangeZ / reverseMeanRanges.xyAvg;
+              const uploadRatio = rangeZ / xyAvg;
+              const zScaleUpload = meanRatio / uploadRatio;
+            for (let i = 2; i < alignedVec.length; i += 3) {
+              alignedVec[i] *= zScaleUpload;
+            }
+            pendingUpload = { img, rawVec, alignedVec };
+
+            const scores = computeAttributeScores(alignedVec);
+            // Debug hooks removed
+            const items = attrs.map((name, i) => ({
+              name,
+              score: scores[i],
+              percentile: scoreToPercentile(name, scores[i])
+            }));
+
+            const ranked = [...items]
+              .sort((a, b) => (b.percentile ?? b.score) - (a.percentile ?? a.score))
+              .map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+            renderAttrList(allAttrsEl, ranked);
+
+            if (modalStatus) modalStatus.textContent = 'Face detected.';
+          } catch (error) {
+            if (modalStatus) modalStatus.textContent = 'Detection failed.';
+            setModalError('Face analysis failed. Check your connection and try again.');
+          }
+        };
+        img.onerror = () => {
+          if (modalStatus) modalStatus.textContent = 'Failed to load image.';
+          setModalError('Could not load the image file.');
+        };
+        img.src = reader.result;
+      };
+      reader.onerror = () => {
+        if (modalStatus) modalStatus.textContent = 'Failed to load image.';
+        setModalError('Could not read the image file.');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Three.js setup
+  const canvas = document.getElementById('canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.NoToneMapping;
+  renderer.toneMappingExposure = 1;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xe0e0e0);
+
+  const camera = new THREE.PerspectiveCamera(20, 1, 0.001, 100);
+  camera.position.set(0, 0, 2.4);
+
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(mean.length);
+  const colors = new Float32Array(mean.length);
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const eyeTriangles = [
+    [33,246,161],[161,246,160],[160,246,159],[159,246,158],[158,246,157],[157,246,173],
+    [33,161,7],[7,163,144],[144,145,153],[153,154,155],[155,133,33],
+    [263,466,388],[388,466,387],[387,466,386],[386,466,385],[385,466,384],[384,466,398],
+    [263,388,249],[249,390,373],[373,374,380],[380,381,382],[382,362,263],
+    [469,158,157],[157,154,469],[469,154,153],[471,144,163],
+    [161,160,471],[471,163,7],[7,161,471],
+    [476,384,385],[474,387,388],[390,373,474],[249,390,474],
+    [474,388,249],[476,380,381],[381,384,476]
+  ];
+
+  const lipTriangles = null; // derived via earcut from outer/inner loops
+
+
+  function pointInPoly(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  let outerPoly = [];
+  let innerPoly = [];
+  let leftEyePoly = [];
+  let rightEyePoly = [];
+  let leftIrisPoly = [];
+  let rightIrisPoly = [];
+
+  const PHOTO_IRIS_TRI_KEY_SET = new Set([
+    [468, 471, 472],
+    [469, 468, 472],
+    [470, 468, 469],
+    [470, 471, 468],
+    [473, 476, 477],
+    [474, 473, 477],
+    [475, 473, 474],
+    [475, 476, 473],
+  ].map((t) => {
+    const sorted = [...t].sort((a, b) => a - b);
+    return sorted.join(',');
+  }));
+  function triKey(t) {
+    const sorted = [...t].sort((a, b) => a - b);
+    return sorted.join(',');
+  }
+
+  let filteredTriangles = [];
+  let useFilteredTriangles = true;
+
+  const basePositions = new Float32Array(mean);
+  const baseCenter = [0, 0, 0];
+  const centerMask = new Uint8Array(basePositions.length / 3);
+  const CENTER_X_THRESHOLD = 0.05;
+  function computeBaseCenter() {
+    baseCenter[0] = 0;
+    baseCenter[1] = 0;
+    baseCenter[2] = 0;
+    for (let i = 0; i < basePositions.length; i += 3) {
+      baseCenter[0] += basePositions[i];
+      baseCenter[1] += basePositions[i + 1];
+      baseCenter[2] += basePositions[i + 2];
+    }
+    baseCenter[0] /= basePositions.length / 3;
+    baseCenter[1] /= basePositions.length / 3;
+    baseCenter[2] /= basePositions.length / 3;
+  }
+  computeBaseCenter();
+  function recomputeCenterMask() {
+    for (let i = 0; i < centerMask.length; i++) {
+      const x = -(basePositions[i * 3] - baseCenter[0]);
+      centerMask[i] = Math.abs(x) < CENTER_X_THRESHOLD ? 1 : 0;
+    }
+  }
+  recomputeCenterMask();
+
+  function updatePolysFromPositions(pos) {
+    function loopToXY(loop) {
+      return loop.map((i) => [pos[i * 3], pos[i * 3 + 1]]);
+    }
+    outerPoly = loopToXY(LIPS_OUTER);
+    innerPoly = loopToXY(LIPS_INNER);
+    leftEyePoly = loopToXY(LEFT_EYE_LOOP);
+    rightEyePoly = loopToXY(RIGHT_EYE_LOOP);
+    leftIrisPoly = loopToXY(LEFT_IRIS_LOOP);
+    rightIrisPoly = loopToXY(RIGHT_IRIS_LOOP);
+  }
+
+  function updateFilteredTriangles(pos) {
+    if (!useFilteredTriangles) {
+      const baseTris = photoMode
+        ? triangles.filter((t) => !PHOTO_IRIS_TRI_KEY_SET.has(triKey(t)))
+        : triangles;
+      geometry.setIndex(baseTris.flat());
+      return;
+    }
+    filteredTriangles = triangles.filter((t) => {
+      const a = t[0], b = t[1], c = t[2];
+      if (LIPS_INNER_SET.has(a) || LIPS_INNER_SET.has(b) || LIPS_INNER_SET.has(c)) {
+        return false;
+      }
+      const cx = (pos[a * 3] + pos[b * 3] + pos[c * 3]) / 3;
+      const cy = (pos[a * 3 + 1] + pos[b * 3 + 1] + pos[c * 3 + 1]) / 3;
+      const inOuter = pointInPoly(cx, cy, outerPoly);
+      const inInner = pointInPoly(cx, cy, innerPoly);
+      const mouthHole = inOuter && !inInner;
+      const inLeftEye = pointInPoly(cx, cy, leftEyePoly);
+      const inRightEye = pointInPoly(cx, cy, rightEyePoly);
+      const inLeftIris = pointInPoly(cx, cy, leftIrisPoly);
+      const inRightIris = pointInPoly(cx, cy, rightIrisPoly);
+      const eyeHole = (inLeftEye && !inLeftIris) || (inRightEye && !inRightIris);
+      const irisHole = inLeftIris || inRightIris;
+      return !(mouthHole || eyeHole || irisHole);
+    });
+    geometry.setIndex(filteredTriangles.flat());
+  }
+
+  function writeBasePositions() {
+    for (let i = 0; i < basePositions.length; i += 3) {
+      positions[i] = -(basePositions[i] - baseCenter[0]);
+      positions[i + 1] = -(basePositions[i + 1] - baseCenter[1]);
+      positions[i + 2] = -(basePositions[i + 2] - baseCenter[2]);
+    }
+  }
+  writeBasePositions();
+  updatePolysFromPositions(positions);
+  updateFilteredTriangles(positions);
+
+  const baseMat = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 0.55,
+    metalness: 0.05,
+    side: THREE.BackSide,
+  });
+  const photoMat = new THREE.MeshBasicMaterial({
+    side: THREE.BackSide,
+  });
+  const mesh = new THREE.Mesh(geometry, baseMat);
+  mesh.renderOrder = 2;
+  mesh.visible = true;
+  scene.add(mesh);
+
+  // Eye selection mesh (invisible, raycast only)
+  const eyeSelectGeom = new THREE.BufferGeometry();
+  const eyeSelectMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.0,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const eyeSelectMesh = new THREE.Mesh(eyeSelectGeom, eyeSelectMat);
+  eyeSelectMesh.visible = false;
+  scene.add(eyeSelectMesh);
+
+  // All points (green)
+  const pointsGeom = new THREE.BufferGeometry();
+  pointsGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const pointsMat = new THREE.PointsMaterial({ size: 0.006, color: 0x00ff00 });
+  const points = new THREE.Points(pointsGeom, pointsMat);
+  points.visible = false;
+  scene.add(points);
+
+  // Eye overlay (white)
+  const eyeOverlayGeom = new THREE.BufferGeometry();
+  const eyeOverlayMat = new THREE.MeshBasicMaterial({ color: 0xe0e0e0, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
+  const eyeOverlayMesh = new THREE.Mesh(eyeOverlayGeom, eyeOverlayMat);
+  eyeOverlayMesh.renderOrder = 0;
+  scene.add(eyeOverlayMesh);
+
+  // Iris disk overlay (black circles)
+  const irisDiskMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide, depthTest: false, depthWrite: false });
+  const leftIrisDisk = new THREE.Mesh(new THREE.CircleGeometry(0.02, 24), irisDiskMat);
+  const rightIrisDisk = new THREE.Mesh(new THREE.CircleGeometry(0.02, 24), irisDiskMat);
+  leftIrisDisk.renderOrder = 1;
+  rightIrisDisk.renderOrder = 1;
+  leftIrisDisk.visible = true;
+  rightIrisDisk.visible = true;
+  scene.add(leftIrisDisk);
+  scene.add(rightIrisDisk);
+
+  // Eye-border ring overlay removed
+
+  // Lips overlay (pink) - outer lip only
+  const lipsGeom = new THREE.BufferGeometry();
+  const lipsMat = new THREE.MeshBasicMaterial({
+    color: 0xd99a87,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.95,
+  });
+  const lipsMesh = new THREE.Mesh(lipsGeom, lipsMat);
+  scene.add(lipsMesh);
+
+
+  // Selection overlay (green)
+  const selectionGeom = new THREE.BufferGeometry();
+  const selectionMat = new THREE.MeshBasicMaterial({
+    color: 0x22ff66,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+  });
+  const selectionMesh = new THREE.Mesh(selectionGeom, selectionMat);
+  scene.add(selectionMesh);
+
+  const filteredEdges = edges;
+  const linePositions = new Float32Array(filteredEdges.length * 2 * 3);
+  const lineGeom = new THREE.BufferGeometry();
+  lineGeom.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xff8bd1, transparent: true, opacity: 0.35 });
+  const lines = new THREE.LineSegments(lineGeom, lineMat);
+  // hide global wireframe
+  lines.visible = false;
+  scene.add(lines);
+
+  // Iris wireframe
+  const irisEdges = enableIrisWire
+    ? edges.filter(([a, b]) =>
+        (LEFT_IRIS_LOOP.includes(a) || RIGHT_IRIS_LOOP.includes(a)) &&
+        (LEFT_IRIS_LOOP.includes(b) || RIGHT_IRIS_LOOP.includes(b))
+      )
+    : [];
+  const irisLinePositions = new Float32Array(irisEdges.length * 2 * 3);
+  const irisLineGeom = new THREE.BufferGeometry();
+  irisLineGeom.setAttribute('position', new THREE.BufferAttribute(irisLinePositions, 3));
+  const irisLineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+  const irisLines = new THREE.LineSegments(irisLineGeom, irisLineMat);
+  irisLines.visible = false;
+  scene.add(irisLines);
+
+  // Eye-border ring logic removed
+
+
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+  scene.add(ambient);
+  const key = new THREE.DirectionalLight(0xffffff, 0.85);
+  key.position.set(1.0, 1.2, 1.5);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+  fill.position.set(-1.2, -0.4, 1.0);
+  scene.add(fill);
+
+  // Triangle selection
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  const selectedFaces = new Set();
+  const selectedEyeFaces = new Set();
+  let eyeSelectTriangles = [];
+  let eyeSelectFrozen = true;
+  const FROZEN_EYE_TRIANGLES = [
+    [173,155,133],[246,33,7],[154,155,157],[173,157,155],[161,246,163],[7,163,246],
+    [145,153,159],[160,161,144],[163,144,161],[153,154,158],[157,158,154],[469,468,472],
+    [382,398,362],[263,466,249],[381,384,382],[398,382,384],[388,390,466],[249,466,390],
+    [387,373,388],[390,388,373],[373,387,374],[380,385,381],[384,381,385],[474,473,477]
+  ];
+
+  function rebuildSelectionGeometry() {
+    const pos = geometry.getAttribute('position').array;
+    const indices = geometry.index.array;
+    const verts = [];
+    selectedFaces.forEach((faceIdx) => {
+      const i0 = indices[faceIdx * 3];
+      const i1 = indices[faceIdx * 3 + 1];
+      const i2 = indices[faceIdx * 3 + 2];
+      verts.push(
+        pos[i0 * 3], pos[i0 * 3 + 1], pos[i0 * 3 + 2],
+        pos[i1 * 3], pos[i1 * 3 + 1], pos[i1 * 3 + 2],
+        pos[i2 * 3], pos[i2 * 3 + 1], pos[i2 * 3 + 2]
+      );
+    });
+    selectedEyeFaces.forEach((faceIdx) => {
+      const t = eyeSelectTriangles[faceIdx];
+      if (!t) return;
+      const [i0, i1, i2] = t;
+      verts.push(
+        pos[i0 * 3], pos[i0 * 3 + 1], pos[i0 * 3 + 2],
+        pos[i1 * 3], pos[i1 * 3 + 1], pos[i1 * 3 + 2],
+        pos[i2 * 3], pos[i2 * 3 + 1], pos[i2 * 3 + 2]
+      );
+    });
+    const arr = new Float32Array(verts);
+    selectionGeom.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    selectionGeom.computeVertexNormals();
+  }
+
+  function logSelectedTriangles() {
+    const indexArray = geometry.index.array;
+    const baseList = Array.from(selectedFaces).sort((a, b) => a - b).map((faceIdx) => {
+      const a = indexArray[faceIdx * 3];
+      const b = indexArray[faceIdx * 3 + 1];
+      const c = indexArray[faceIdx * 3 + 2];
+      return [a, b, c];
+    });
+    const eyeList = Array.from(selectedEyeFaces).sort((a, b) => a - b).map((faceIdx) => {
+      return eyeSelectTriangles[faceIdx];
+    });
+    console.log('Selected triangles (vertex indices):', baseList.concat(eyeList));
+  }
+
+  canvas.addEventListener('click', (e) => {
+    if (e.shiftKey) return;
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects([mesh, eyeSelectMesh], false);
+    if (!hits.length) return;
+    const hit = hits[0];
+    const faceIdx = hit.faceIndex;
+    if (hit.object === eyeSelectMesh) {
+      if (selectedEyeFaces.has(faceIdx)) selectedEyeFaces.delete(faceIdx);
+      else selectedEyeFaces.add(faceIdx);
+    } else {
+      if (selectedFaces.has(faceIdx)) selectedFaces.delete(faceIdx);
+      else selectedFaces.add(faceIdx);
+    }
+    rebuildSelectionGeometry();
+    logSelectedTriangles();
+  });
+
+  // Point selection (shift+click)
+  const selectedPoints = new Set();
+  const selectedPointsGeom = new THREE.BufferGeometry();
+  const selectedPointsMat = new THREE.PointsMaterial({ size: 0.01, color: 0xffaa00 });
+  const selectedPointsMesh = new THREE.Points(selectedPointsGeom, selectedPointsMat);
+  scene.add(selectedPointsMesh);
+
+  function rebuildSelectedPoints() {
+    const pos = geometry.getAttribute('position').array;
+    const verts = [];
+    selectedPoints.forEach((idx) => {
+      verts.push(pos[idx * 3], pos[idx * 3 + 1], pos[idx * 3 + 2]);
+    });
+    selectedPointsGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+  }
+
+  function logSelectedPoints() {
+    console.log('Selected points:', Array.from(selectedPoints).sort((a, b) => a - b));
+  }
+
+  canvas.addEventListener('click', (e) => {
+    if (!e.shiftKey) return;
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    raycaster.params.Points.threshold = 0.03;
+    const hits = raycaster.intersectObject(points, false);
+    if (!hits.length) return;
+    const idx = hits[0].index;
+    if (selectedPoints.has(idx)) selectedPoints.delete(idx);
+    else selectedPoints.add(idx);
+    rebuildSelectedPoints();
+    logSelectedPoints();
+  });
+
+  function updateLineGeometry() {
+    const pos = geometry.getAttribute('position').array;
+    let i = 0;
+    for (const [a, b] of filteredEdges) {
+      const ai = a * 3;
+      const bi = b * 3;
+      linePositions[i++] = pos[ai];
+      linePositions[i++] = pos[ai + 1];
+      linePositions[i++] = pos[ai + 2];
+      linePositions[i++] = pos[bi];
+      linePositions[i++] = pos[bi + 1];
+      linePositions[i++] = pos[bi + 2];
+    }
+    lineGeom.getAttribute('position').needsUpdate = true;
+
+    // iris wireframe update (disabled)
+    if (enableIrisWire) {
+      let j = 0;
+      for (const [a, b] of irisEdges) {
+        const ai = a * 3;
+        const bi = b * 3;
+        irisLinePositions[j++] = pos[ai];
+        irisLinePositions[j++] = pos[ai + 1];
+        irisLinePositions[j++] = pos[ai + 2];
+        irisLinePositions[j++] = pos[bi];
+        irisLinePositions[j++] = pos[bi + 1];
+        irisLinePositions[j++] = pos[bi + 2];
+      }
+      irisLineGeom.getAttribute('position').needsUpdate = true;
+    }
+
+  }
+
+  // Eye-ring rebuild removed
+
+  let lipsFrozen = true;
+  const FROZEN_LIPS_TRI = [
+    10,30,29,27,26,25,25,24,23,23,22,21,31,30,10,10,11,12,12,13,14,14,15,16,16,17,18,18,19,0,0,1,2,2,3,4,5,6,7,7,8,9,9,10,29,27,25,23,31,10,12,12,14,16,16,18,0,0,2,4,5,7,9,9,29,28,28,27,23,32,31,12,0,4,5,5,9,28,33,32,12,0,5,28,34,33,12,0,28,23,35,34,12,0,23,21,35,12,16,0,21,20,36,35,16,16,0,20,37,36,16,16,20,39,38,37,16,16,39,38
+  ];
+
+  function rebuildLipsGeometry() {
+    const pos = geometry.getAttribute('position').array;
+    const indexToPos = [...LIPS_OUTER, ...LIPS_INNER];
+    const verts = [];
+    if (lipsFrozen) {
+      for (let i = 0; i < FROZEN_LIPS_TRI.length; i += 3) {
+        const a = indexToPos[FROZEN_LIPS_TRI[i]];
+        const b = indexToPos[FROZEN_LIPS_TRI[i + 1]];
+        const c = indexToPos[FROZEN_LIPS_TRI[i + 2]];
+        verts.push(
+          pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2],
+          pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2],
+          pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2]
+        );
+      }
+    } else {
+      const verts2d = [];
+      for (const idx of indexToPos) {
+        verts2d.push(pos[idx * 3], pos[idx * 3 + 1]);
+      }
+      const holeIndex = LIPS_OUTER.length;
+      const tri = earcut(verts2d, [holeIndex]);
+      for (let i = 0; i < tri.length; i += 3) {
+        const a = indexToPos[tri[i]];
+        const b = indexToPos[tri[i + 1]];
+        const c = indexToPos[tri[i + 2]];
+        verts.push(
+          pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2],
+          pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2],
+          pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2]
+        );
+      }
+    }
+    lipsGeom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts), 3));
+    lipsGeom.computeVertexNormals();
+  }
+
+  function rebuildEyeSelectGeometry() {
+    const pos = geometry.getAttribute('position').array;
+    const verts = [];
+    const tris = [];
+
+    if (eyeSelectFrozen) {
+      eyeSelectTriangles = FROZEN_EYE_TRIANGLES;
+      for (const [a, b, c] of eyeSelectTriangles) {
+        verts.push(
+          pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2],
+          pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2],
+          pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2]
+        );
+      }
+      const buf = new Float32Array(verts);
+      eyeSelectGeom.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+      eyeSelectGeom.computeVertexNormals();
+      eyeOverlayGeom.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+      eyeOverlayGeom.computeVertexNormals();
+      return;
+    }
+
+    function addEyeFromOfficial(outerPoly, innerPoly) {
+      for (const [a, b, c] of triangles) {
+        const cx = (pos[a * 3] + pos[b * 3] + pos[c * 3]) / 3;
+        const cy = (pos[a * 3 + 1] + pos[b * 3 + 1] + pos[c * 3 + 1]) / 3;
+        const inOuter = pointInPoly(cx, cy, outerPoly);
+        const inInner = pointInPoly(cx, cy, innerPoly);
+        if (inOuter && !inInner) {
+          tris.push([a, b, c]);
+          verts.push(
+            pos[a * 3], pos[a * 3 + 1], pos[a * 3 + 2],
+            pos[b * 3], pos[b * 3 + 1], pos[b * 3 + 2],
+            pos[c * 3], pos[c * 3 + 1], pos[c * 3 + 2]
+          );
+        }
+      }
+    }
+
+    addEyeFromOfficial(leftEyePoly, leftIrisPoly);
+    addEyeFromOfficial(rightEyePoly, rightIrisPoly);
+
+    eyeSelectTriangles = tris;
+    const buf = new Float32Array(verts);
+    eyeSelectGeom.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+    eyeSelectGeom.computeVertexNormals();
+    eyeOverlayGeom.setAttribute('position', new THREE.BufferAttribute(buf, 3));
+    eyeOverlayGeom.computeVertexNormals();
+
+    // frozen list provided by user
+  }
+
+  function updateIrisDisks() {
+    if (!enableIrisDisks || photoMode) {
+      leftIrisDisk.visible = false;
+      rightIrisDisk.visible = false;
+      return;
+    }
+    const pos = geometry.getAttribute('position').array;
+
+    function placeDisk(loop, disk) {
+      const pts = loop.map((idx) => {
+        return new THREE.Vector3(pos[idx * 3], pos[idx * 3 + 1], pos[idx * 3 + 2]);
+      });
+      const center = pts.reduce((acc, v) => acc.add(v), new THREE.Vector3()).multiplyScalar(1 / pts.length);
+      const r = pts.reduce((acc, v) => Math.max(acc, v.distanceTo(center)), 0);
+
+      // Estimate normal via first three points
+      const v1 = new THREE.Vector3().subVectors(pts[1], pts[0]);
+      const v2 = new THREE.Vector3().subVectors(pts[2], pts[0]);
+      const normal = new THREE.Vector3().crossVectors(v1, v2).normalize();
+
+      disk.geometry.dispose();
+      disk.geometry = new THREE.CircleGeometry(Math.max(r, 0.001), 24);
+      disk.position.copy(center);
+
+      // Orient disk to face normal
+      const q = new THREE.Quaternion();
+      q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+      disk.setRotationFromQuaternion(q);
+    }
+
+    placeDisk(LEFT_IRIS_LOOP, leftIrisDisk);
+    placeDisk(RIGHT_IRIS_LOOP, rightIrisDisk);
+  }
+
+  // Eye mesh builders removed
+
+
+  function updateColors() {
+    const pos = geometry.getAttribute('position').array;
+    let minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (let i = 0; i < pos.length; i += 3) {
+      const y = pos[i + 1];
+      const z = pos[i + 2];
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+    }
+    const yRange = Math.max(1e-6, maxY - minY);
+    const zRange = Math.max(1e-6, maxZ - minZ);
+    for (let i = 0; i < pos.length; i += 3) {
+      const idx = i / 3;
+      const y = pos[i + 1];
+      const z = pos[i + 2];
+      const tY = (y - minY) / yRange;
+      const tZ = (z - minZ) / zRange;
+      const shade = 0.75 + 0.35 * tZ;
+      const warm = 0.06 * (1.0 - tY);
+      let r = (0.92 + warm) * shade;
+      let g = 0.74 * shade;
+      let b = 0.66 * shade;
+
+      // Lips are rendered via overlay mesh now
+
+      r = Math.min(1, Math.max(0, r));
+      g = Math.min(1, Math.max(0, g));
+      b = Math.min(1, Math.max(0, b));
+      colors[i] = r;
+      colors[i + 1] = g;
+      colors[i + 2] = b;
+    }
+    geometry.getAttribute('color').needsUpdate = true;
+  }
+
+  let needsUpdate = true;
+  function recomputeMesh() {
+    const scale = parseFloat(globalScaleEl.value);
+    const zScale = 1.0;
+    writeBasePositions();
+
+    for (let a = 0; a < weights.length; a++) {
+      const w = weights[a];
+      if (w === 0) continue;
+      const vec = activeVectors[a];
+      for (let i = 0; i < positions.length; i += 3) {
+        if (centerMask[i / 3] === 0) {
+          positions[i] += -vec[i] * w * scale;
+        }
+        positions[i + 1] += -vec[i + 1] * w * scale;
+        positions[i + 2] += -vec[i + 2] * w * scale;
+      }
+    }
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i + 2] *= zScale;
+    }
+    geometry.getAttribute('position').needsUpdate = true;
+    pointsGeom.getAttribute('position').needsUpdate = true;
+    geometry.computeVertexNormals();
+    updateColors();
+    updateLineGeometry();
+    rebuildEyeSelectGeometry();
+    updateIrisDisks();
+    rebuildLipsGeometry();
+    needsUpdate = false;
+  }
+
+  function resize() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    if (needsUpdate) recomputeMesh();
+    renderer.render(scene, camera);
+  }
+  animate();
+  </script>
+</body>
+</html>
